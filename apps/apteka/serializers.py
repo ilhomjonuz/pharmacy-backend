@@ -105,7 +105,7 @@ class PillDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_type_uz(self, obj) -> str:
-        type_name = obj.type.name
+        type_name = obj.type.name_uz
         return type_name
 
     def get_type_ru(self, obj) -> str:

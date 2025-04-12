@@ -201,9 +201,9 @@ async def show_pill_info(call: CallbackQuery, dori_id):
                  f"🇺🇿 Nomi: {dori[1]}\n"
                  f"🇷🇺 Название: {dori[2]}\n"
                  f"🇬🇧 Name: {dori[3]}\n"
-                 f"💰 Narxi: {dori[4]}\n"
-                 f"🇺🇿 Tarkibi: {dori[5]}\n"
-                 f"📆 Yaroqlilik muddati: {dori[5]}")
+                 f"💰 Narxi: {dori[5]}\n"
+                 f"🇺🇿 Tarkibi: {dori[4]}\n"
+                 f"📆 Yaroqlilik muddati: {dori[7]}")
     image = f"media/{dori[6]}"
     try:
         await call.message.answer_photo(FSInputFile(image), caption=dori_info, reply_markup=await show_dori_inline(dori_id))

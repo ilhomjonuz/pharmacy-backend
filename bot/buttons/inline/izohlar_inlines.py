@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from loader import db, bot
+from ...loader import db, bot
 
 
 class IzohCallbackData(CallbackData, prefix="izoh"):
@@ -19,20 +19,32 @@ async def create_izoh_callback(comment_id, step=0, action='0'):
 async def make_izohlar_list():
     all_izoh = await db.select_comments()
     CURRENT_LEVEL = 0
-    markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=izoh[1],
-                    callback_data=await create_izoh_callback(comment_id=izoh[0], step=CURRENT_LEVEL + 1))
-            ] for izoh in all_izoh
-        ],
-    )
-    close_button = InlineKeyboardButton(
-        text="❌ Yopish",
-        callback_data=await create_izoh_callback(comment_id=0, step=CURRENT_LEVEL - 1, action='close')
-    )
-    markup.inline_keyboard.append([close_button])
+    if all_izoh:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=izoh[1],
+                        callback_data=await create_izoh_callback(comment_id=izoh[0], step=CURRENT_LEVEL + 1))
+                ] for izoh in all_izoh
+            ],
+        )
+        close_button = InlineKeyboardButton(
+            text="❌ Yopish",
+            callback_data=await create_izoh_callback(comment_id=0, step=CURRENT_LEVEL - 1, action='close')
+        )
+        markup.inline_keyboard.append([close_button])
+    else:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="❌ Yopish",
+                        callback_data=await create_izoh_callback(comment_id=0, step=CURRENT_LEVEL - 1, action='close')
+                    )
+                ]
+            ]
+        )
     return markup
 
 

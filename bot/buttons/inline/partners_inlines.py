@@ -1,6 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from loader import db
+from ...loader import db
 
 
 class PartnerCallbackData(CallbackData, prefix="partner_callback"):
@@ -16,21 +16,33 @@ async def create_partner_callback(image_id, step=0, action='0'):
 async def make_partners_list():
     all_partners = await db.select_partners()
     CURRENT_LEVEL = 0
-    markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=f"{i}-hamkor",
-                    callback_data=await create_partner_callback(all_partners[i - 1][0], CURRENT_LEVEL + 1)
-                )
-            ] for i in range(1, len(all_partners) + 1)
-        ],
-    )
-    close_button = InlineKeyboardButton(
-        text="❌ Yopish",
-        callback_data=await create_partner_callback(0, CURRENT_LEVEL - 1)
-    )
-    markup.inline_keyboard.append([close_button])
+    if all_partners:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=f"{i}-hamkor",
+                        callback_data=await create_partner_callback(all_partners[i - 1][0], CURRENT_LEVEL + 1)
+                    )
+                ] for i in range(1, len(all_partners) + 1)
+            ],
+        )
+        close_button = InlineKeyboardButton(
+            text="❌ Yopish",
+            callback_data=await create_partner_callback(0, CURRENT_LEVEL - 1)
+        )
+        markup.inline_keyboard.append([close_button])
+    else:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="❌ Yopish",
+                        callback_data=await create_partner_callback(0, CURRENT_LEVEL - 1)
+                    )
+                ]
+            ]
+        )
     return markup
 
 
