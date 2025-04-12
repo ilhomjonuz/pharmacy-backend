@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from loader import db
+from ...loader import db
 
 
 class TypeCallbackData(CallbackData, prefix="type_callback"):
@@ -17,21 +17,34 @@ async def create_type_callback(type_id, step=0, action='0'):
 async def make_types_list():
     all_types = await db.select_types()
     CURRENT_LEVEL = 0
-    markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=type_[1],
-                    callback_data=await create_type_callback(type_[0], CURRENT_LEVEL + 1)
-                )
-            ] for type_ in all_types
-        ],
-    )
-    close_button = InlineKeyboardButton(
-        text="❌ Yopish",
-        callback_data=await create_type_callback(0, CURRENT_LEVEL - 1)
-    )
-    markup.inline_keyboard.append([close_button])
+
+    if all_types:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=type_[1],
+                        callback_data=await create_type_callback(type_[0], CURRENT_LEVEL + 1)
+                    )
+                ] for type_ in all_types
+            ],
+        )
+        close_button = InlineKeyboardButton(
+            text="❌ Yopish",
+            callback_data=await create_type_callback(0, CURRENT_LEVEL - 1)
+        )
+        markup.inline_keyboard.append([close_button])
+    else:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="❌ Yopish",
+                        callback_data=await create_type_callback(0, CURRENT_LEVEL - 1)
+                    )
+                ]
+            ]
+        )
     return markup
 
 
@@ -73,21 +86,33 @@ async def create_category_callback(category_id, step=0, action='0'):
 async def make_categories_list():
     all_types = await db.select_categories()
     CURRENT_LEVEL = 0
-    markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=type_[1],
-                    callback_data=await create_category_callback(type_[0], CURRENT_LEVEL + 1)
-                )
-            ] for type_ in all_types
-        ],
-    )
-    close_button = InlineKeyboardButton(
-        text="❌ Yopish",
-        callback_data=await create_category_callback(0, CURRENT_LEVEL - 1)
-    )
-    markup.inline_keyboard.append([close_button])
+    if all_types:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=type_[1],
+                        callback_data=await create_category_callback(type_[0], CURRENT_LEVEL + 1)
+                    )
+                ] for type_ in all_types
+            ],
+        )
+        close_button = InlineKeyboardButton(
+            text="❌ Yopish",
+            callback_data=await create_category_callback(0, CURRENT_LEVEL - 1)
+        )
+        markup.inline_keyboard.append([close_button])
+    else:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="❌ Yopish",
+                        callback_data=await create_type_callback(0, CURRENT_LEVEL - 1)
+                    )
+                ]
+            ]
+        )
     return markup
 
 

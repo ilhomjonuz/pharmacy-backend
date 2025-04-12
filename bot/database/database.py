@@ -13,6 +13,7 @@ class Database:
         self.pool = None
 
     async def connect(self):
+        # Create the connection pool
         self.pool = await aiomysql.create_pool(
             host=env.str('MYSQL_HOST'),
             port=env.int('MYSQL_PORT'),
@@ -23,6 +24,9 @@ class Database:
         )
 
     async def execute(self, query, args: tuple = (), fetchone=False, fetchall=False):
+        if self.pool is None:
+            await self.connect()
+
         async with self.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(query, args)
@@ -198,7 +202,7 @@ class Database:
 
     async def select_medication(self, id):
         query = """
-        SELECT id, name_uz, body, information_uz, price, expiration_date, picture, expiration_date, discount_price
+        SELECT id, name_uz, name_ru, name_en, information_uz, price, picture, expiration_date, discount_price
         FROM pills WHERE id = %s;
         """
         return await self.execute(query, (id,), fetchone=True)

@@ -1,7 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from loader import db, bot
+from ...loader import db, bot
 
 
 class DoctorCallbackData(CallbackData, prefix="doctor_callback"):
@@ -19,20 +19,32 @@ async def create_doctor_callback(doctor_id, step=0, action='0'):
 async def make_doctors_list():
     all_doctors = await db.select_doctors()
     CURRENT_LEVEL = 0
-    markup = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=doctor[1],
-                    callback_data=await create_doctor_callback(doctor_id=doctor[0], step=CURRENT_LEVEL + 1))
-            ] for doctor in all_doctors
-        ],
-    )
-    close_button = InlineKeyboardButton(
-        text="❌ Yopish",
-        callback_data=await create_doctor_callback(doctor_id=0, step=CURRENT_LEVEL - 1, action='close')
-    )
-    markup.inline_keyboard.append([close_button])
+    if all_doctors:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=doctor[1],
+                        callback_data=await create_doctor_callback(doctor_id=doctor[0], step=CURRENT_LEVEL + 1))
+                ] for doctor in all_doctors
+            ],
+        )
+        close_button = InlineKeyboardButton(
+            text="❌ Yopish",
+            callback_data=await create_doctor_callback(doctor_id=0, step=CURRENT_LEVEL - 1, action='close')
+        )
+        markup.inline_keyboard.append([close_button])
+    else:
+        markup = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="❌ Yopish",
+                        callback_data=await create_doctor_callback(doctor_id=0, step=CURRENT_LEVEL - 1, action='close')
+                    )
+                ]
+            ]
+        )
     return markup
 
 
