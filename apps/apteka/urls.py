@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (PopularPillsAPIView, LastPillsAPIView, DiscountPillsAPIView, RatingPillsAPIView, AllPillsAPIView,
                     PillDetailAPIView, CommentaryListAPIView, DoctorListAPIView, DoctorDetailAPIView,
-                    PartnerListAPIView, CategoryListAPIView, AchievementListAPIView, AchievementRetrieveAPIView)
+                    PartnerListAPIView, CategoryListAPIView, AchievementListAPIView, AchievementRetrieveAPIView,
+                    OrderCreateApiView)
 
 urlpatterns = [
     path('lasts-pills/', LastPillsAPIView.as_view(), name='lasts-pills'),
@@ -22,4 +23,6 @@ urlpatterns = [
 
     path('achievements/', AchievementListAPIView.as_view(), name='achievement-list'),
     path('achievements/<int:pk>/', AchievementRetrieveAPIView.as_view(), name='achievement-detail'),
+
+    path('order/create/', OrderCreateApiView.as_view(), name='order-create')
 ]

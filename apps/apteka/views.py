@@ -1,8 +1,20 @@
+import os
+
+
+from aiogram.types import BufferedInputFile
+from asgiref.sync import async_to_sync
+from django.conf import settings
 from rest_framework import generics
-from .models import Pill, Doctor, Commentary, Partner, Category, Achievement
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from bot.data.config import CHANNELS
+from bot.loader import bot
+from .models import Pill, Doctor, Commentary, Partner, Category, Achievement, Order
 from .serializers import (DiscountPillSerializer, SmallPillSerializer, LastPillSerializer, AllPillSerializer,
                           PillDetailSerializer, DoctorsListSerializer, DoctorDetailSerializer, CommentarySerializer,
-                          PartnerSerializer, CategorySerializer, AchievementListSerializer, AchievementDetailSerializer)
+                          PartnerSerializer, CategorySerializer, AchievementListSerializer, AchievementDetailSerializer,
+                          OrderCreateSerializer)
 
 # ------------------------ Pills views ----------------------------------------------------------------------------
 
@@ -108,3 +120,93 @@ class AchievementRetrieveAPIView(generics.RetrieveAPIView):
     serializer_class = AchievementDetailSerializer
 
 # ------------------------ Achievement views end -----------------------------------------------------------------
+
+
+# ---------------------------Order views ----------------------------------------------
+
+class OrderCreateApiView(APIView):
+    serializer_class = OrderCreateSerializer
+
+    def validate_phone_number(self, phone_number):
+        if '+998' in phone_number[:4] and len(phone_number) == 13:
+            return phone_number
+        elif phone_number.isdigit() and len(phone_number) == 9:
+            return f'+998{phone_number}'
+        return None
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = request.data
+        phone_number = self.validate_phone_number(data['phone_number'])
+
+        if not phone_number:
+            return Response(
+                {"message": "Telefon raqam noto'g'ri kiritilgan"},
+                status=400
+            )
+
+        try:
+            pill = Pill.objects.get(pk=data['pill_id'])
+        except Pill.DoesNotExist:
+            return Response(
+                {"message": "Bunday id raqamli ma'lumot topilmadi"},
+                status=400
+            )
+
+        pill_data = PillDetailSerializer(pill).data
+        async_to_sync(self.send_order_info)(phone_number, data, pill_data)
+        serializer.save()
+
+        return Response(
+            {"message": "So'rov muvaffaqiyatli yuborildi!"},
+            status=202
+        )
+
+    async def send_order_info(self, phone_number, data, pill_data):
+        try:
+            caption = self.generate_order_caption(phone_number, data, pill_data)
+            photo = self.get_pill_image(pill_data)
+
+            await bot.send_photo(
+                chat_id=CHANNELS[0],
+                photo=photo,
+                caption=caption,
+                parse_mode='HTML'
+            )
+        except Exception as e:
+            print(f"Xatolik yuz berdi: {e}")
+        finally:
+            await bot.session.close()
+
+    def generate_order_caption(self, phone_number, data, pill_data):
+        base_info = f"🏷 <b>Mahsulot nomi:</b> {pill_data['name_uz']}\n"
+        base_info += f"📝 <b>Mahsulot haqida:</b> {pill_data['information_uz']}\n"
+        base_info += f"🧪 <b>Mahsulot tarkibi:</b> {pill_data['information_uz']}\n"
+        base_info += f"🏷 <b>Mahsulot turi:</b> {pill_data['type_uz']}\n"
+        base_info += f"📅 <b>Yaroqlilik muddati:</b> {pill_data['expiration_date']}\n"
+        base_info += f"💰 <b>Narxi:</b> {pill_data['price']} so'm\n"
+
+        if pill_data.get('discount_price'):
+            base_info += f"🔥 <b>Chegirmadagi narx:</b> {pill_data['discount_price']} so'm\n\n"
+
+        client_info = f"👤 <b>Mijoz:</b> {data['fullname']}\n"
+        client_info += f"📞 <b>Telefon:</b> {phone_number}\n"
+        client_info += f"✉️ <b>Xabar:</b> {data.get('message', 'Mavjud emas')}"
+
+        header = "🛒 <b>YANGI BUYURTMA</b> 🛒\n\n"
+
+        return header + base_info + client_info
+
+    def get_pill_image(self, pill_data):
+        relative_path = pill_data['picture'].replace('/bot/media/', '')
+        absolute_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+
+        if not os.path.exists(absolute_path):
+            raise FileNotFoundError(f"Rasm fayli topilmadi: {absolute_path}")
+
+        with open(absolute_path, 'rb') as file:
+            file_bytes = file.read()
+
+        return BufferedInputFile(file_bytes, filename=os.path.basename(absolute_path))
