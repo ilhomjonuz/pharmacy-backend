@@ -8,11 +8,14 @@ services:
     command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
+      - /app/static
+      - /app/media
     env_file:
       - envs/.env
     depends_on:
       db:
         condition: service_healthy
+
     ports:
       - "8000:8000"
 
@@ -29,6 +32,37 @@ services:
       interval: 10s
       retries: 3
       timeout: 5s
+  bot:
+    build:
+      context: .
+      dockerfile: ./compose/django/Dockerfile
+    image: support_bot
+    command: python /app/Bot/main.py
+    volumes:
+      - .:/app
+    env_file:
+      - envs/.env
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./compose/nginx/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'
 
 volumes:
+  static_volume:
   mysql_data:
+  media_volume:

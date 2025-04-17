@@ -138,13 +138,27 @@ class Entry(models.Model):
     fullname = models.CharField(max_length=255, verbose_name="Ism-familiya")
     phone_number = models.CharField(max_length=20, validators=[MinLengthValidator(7)],
                                     verbose_name="Telefon raqam")
+    message = models.TextField(verbose_name="Ma'lumot")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yuborilgan vaqt")
 
     class Meta:
         db_table = 'entries'
         ordering = ['-created_at']
-        verbose_name = 'Murojat'
+        verbose_name = 'Murojat '
         verbose_name_plural = 'Murojatlar'
 
     def __str__(self):
         return self.fullname
+
+class Order(models.Model):
+    pill_id = models.ForeignKey(Pill, on_delete=models.CASCADE, verbose_name="Dori id raqami")
+    fullname = models.CharField(max_length=255, verbose_name="Ism-familiya")
+    phone_number = models.CharField(max_length=20, verbose_name="Telefon raqam")
+    message = models.TextField(verbose_name="Ma'lumot")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yuborilgan vaqt")
+
+
+    class Meta:
+        db_table = 'orders'
+        verbose_name = "Buyurtma "
+        verbose_name_plural = "Buyurtmalar"
