@@ -14,7 +14,7 @@ from .models import Pill, Doctor, Commentary, Partner, Category, Achievement, Or
 from .serializers import (DiscountPillSerializer, SmallPillSerializer, LastPillSerializer, AllPillSerializer,
                           PillDetailSerializer, DoctorsListSerializer, DoctorDetailSerializer, CommentarySerializer,
                           PartnerSerializer, CategorySerializer, AchievementListSerializer, AchievementDetailSerializer,
-                          OrderCreateSerializer)
+                          OrderCreateSerializer, EntryCreateSerializer)
 
 # ------------------------ Pills views ----------------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ class OrderCreateApiView(APIView):
 
         return Response(
             {"message": "So'rov muvaffaqiyatli yuborildi!"},
-            status=202
+            status=201
         )
 
     async def send_order_info(self, phone_number, data, pill_data):
@@ -210,3 +210,59 @@ class OrderCreateApiView(APIView):
             file_bytes = file.read()
 
         return BufferedInputFile(file_bytes, filename=os.path.basename(absolute_path))
+
+
+class EntryCreateAPIView(APIView):
+    serializer_class = EntryCreateSerializer
+
+    def validate_phone_number(self, phone_number):
+        if '+998' in phone_number[:4] and len(phone_number) == 13:
+            return phone_number
+        elif phone_number.isdigit() and len(phone_number) == 9:
+            return f'+998{phone_number}'
+        return None
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = request.data
+        phone_number = self.validate_phone_number(data['phone_number'])
+        if not phone_number:
+            return Response(
+                {"message": "Telefon raqam noto'g'ri kiritilgan"},
+                status=400
+            )
+        async_to_sync(self.send_order_info)(phone_number, data)
+        serializer.save()
+        return Response(
+            {"message": "So'rov muvaffaqiyatli yuborildi!"},
+            status=201
+        )
+
+
+
+    def generate_entry_caption(self, phone_number, data):
+
+        client_info = f"👤 <b>Mijoz:</b> {data['fullname']}\n"
+        client_info += f"📞 <b>Telefon:</b> {phone_number}\n"
+        client_info += f"✉️ <b>Xabar:</b> {data['message']}"
+
+        header = "👤 <b>Yangi mijoz</b> 👤\n\n"
+
+        return header + client_info
+
+
+    async def send_order_info(self, phone_number, data):
+        try:
+            caption = self.generate_entry_caption(phone_number, data)
+            await bot.send_message(
+                chat_id=CHANNELS[0],
+                text=caption,
+                parse_mode='HTML'
+            )
+        except Exception as e:
+            print(f"Xatolik yuz berdi: {e}")
+        finally:
+            await bot.session.close()
+
+

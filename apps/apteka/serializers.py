@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 
 from rest_framework import serializers
-from .models import Pill, Doctor, Partner, Commentary, Category, Achievement, Order
+from .models import Pill, Doctor, Partner, Commentary, Category, Achievement, Order, Entry
 
 
 # ------------------------ Pills serializers -----------------------------------------------------------------------
@@ -203,4 +203,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['pill_id', 'fullname', 'phone_number', 'message']
+
+
+
+# ------------------------------ Entry serializers -----------------------------------------
+
+class EntryCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Entry
+        fields = ['fullname', 'phone_number', 'message']
 
