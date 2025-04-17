@@ -35,7 +35,7 @@ services:
   bot:
     build:
       context: .
-      dockerfile: ./compose/django/Dockerfile
+      dockerfile: ./dockerfiles/django/Dockerfile
     image: support_bot
     command: python /app/Bot/main.py
     volumes:
@@ -48,7 +48,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: ./compose/nginx/Dockerfile
+      dockerfile: ./dockerfiles/nginx/Dockerfile
     ports:
       - "80:80"
       - "443:443"
