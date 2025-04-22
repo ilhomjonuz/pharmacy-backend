@@ -14,7 +14,10 @@ class LastPillSerializer(serializers.ModelSerializer):
             'id',
             'name_uz', 'name_ru', 'name_en',
             'body_uz', 'body_ru', 'body_en',
+            'information_uz', 'information_ru', 'information_en',
             'picture',
+            'price', 'discount_price',
+            'rank',
             'created_at', 'updated_at',
         ]
 
@@ -25,7 +28,10 @@ class SmallPillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pill
         fields = [
-            'id', 'name_uz', 'name_ru', 'name_en', 'picture', 'price', 'rank'
+            'id', 'name_uz', 'name_ru', 'name_en',
+            'body_uz', 'body_ru', 'body_en',
+            'information_uz', 'information_ru', 'information_en',
+            'picture', 'price', 'rank'
         ]
 
     def get_price(self, object) -> float:
@@ -50,7 +56,7 @@ class AllPillSerializer(serializers.ModelSerializer):
             'id', 'categories_uz', 'categories_ru', 'categories_en',
             'name_uz', 'name_ru', 'name_en',
             'body_uz', 'body_ru', 'body_en',
-            'price', 'percentage', 'discount_price',
+            'price', 'discount_price',
             'type_uz', 'type_ru', 'type_en',
             'expiration_date',
             'picture',
