@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from database import Database
+from bot.database import Database
 from data.config import BOT_TOKEN
 
 
