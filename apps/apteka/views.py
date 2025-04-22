@@ -1,5 +1,5 @@
 import os
-
+import re
 
 from aiogram.types import BufferedInputFile
 from asgiref.sync import async_to_sync
@@ -180,20 +180,27 @@ class OrderCreateApiView(APIView):
         finally:
             await bot.session.close()
 
+    def clean_html(self, raw_html):
+        clean = re.compile('<.*?>')
+        return re.sub(clean, '', raw_html)
+
     def generate_order_caption(self, phone_number, data, pill_data):
-        base_info = f"🏷 <b>Mahsulot nomi:</b> {pill_data['name_uz']}\n"
-        base_info += f"📝 <b>Mahsulot haqida:</b> {pill_data['information_uz']}\n"
-        base_info += f"🧪 <b>Mahsulot tarkibi:</b> {pill_data['information_uz']}\n"
-        base_info += f"🏷 <b>Mahsulot turi:</b> {pill_data['type_uz']}\n"
-        base_info += f"📅 <b>Yaroqlilik muddati:</b> {pill_data['expiration_date']}\n"
-        base_info += f"💰 <b>Narxi:</b> {pill_data['price']} so'm\n"
+        def safe_field(value):
+            return self.clean_html(str(value)) if value else 'Mavjud emas'
+
+        base_info = f"🏷 <b>Mahsulot nomi:</b> {safe_field(pill_data['name_uz'])}\n"
+        base_info += f"📝 <b>Mahsulot haqida:</b> {safe_field(pill_data['body_uz'])}\n"
+        base_info += f"🧪 <b>Mahsulot tarkibi:</b> {safe_field(pill_data['information_uz'])}\n"
+        base_info += f"🏷 <b>Mahsulot turi:</b> {safe_field(pill_data['type_uz'])}\n"
+        base_info += f"📅 <b>Yaroqlilik muddati:</b> {safe_field(pill_data['expiration_date'])}\n"
+        base_info += f"💰 <b>Narxi:</b> {safe_field(pill_data['price'])} so'm\n"
 
         if pill_data.get('discount_price'):
-            base_info += f"🔥 <b>Chegirmadagi narx:</b> {pill_data['discount_price']} so'm\n\n"
+            base_info += f"🔥 <b>Chegirmadagi narx:</b> {safe_field(pill_data['discount_price'])} so'm\n\n"
 
-        client_info = f"👤 <b>Mijoz:</b> {data['fullname']}\n"
+        client_info = f"👤 <b>Mijoz:</b> {safe_field(data['fullname'])}\n"
         client_info += f"📞 <b>Telefon:</b> {phone_number}\n"
-        client_info += f"✉️ <b>Xabar:</b> {data.get('message', 'Mavjud emas')}"
+        client_info += f"✉️ <b>Xabar:</b> {safe_field(data.get('message', 'Mavjud emas'))}"
 
         header = "🛒 <b>YANGI BUYURTMA</b> 🛒\n\n"
 

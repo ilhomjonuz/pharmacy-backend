@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Stop script on error
 set -e
 
 echo "Waiting for MySQL to start..."
 
 # Python skript orqali MySQL tayyorligini tekshirish
-until python -c "import sys; import MySQLdb;
+until python -c "import sys; import MySQLdb; 
 try:
     conn = MySQLdb.connect(
         host='$MYSQL_HOST',
@@ -33,5 +32,8 @@ python manage.py createadmin
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
+# Starting the app
 echo "Starting application..."
+#python app.py  # app.py faylini to'g'ri joylashgan joyini ko'rsatish
+
 exec "$@"

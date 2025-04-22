@@ -8,7 +8,7 @@ env = Env()
 env.read_env('.env')
 
 
-class Database:
+class Apteka_Database:
     def __init__(self):
         self.pool = None
 
