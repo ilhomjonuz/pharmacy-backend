@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+
+from corsheaders.defaults import default_headers
 from environs import Env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -13,10 +15,22 @@ env.read_env('envs/.env')
 SECRET_KEY = env.str("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DJANGO_DEBUG', default=True)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['*'])
 
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS')
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'Accept-Language',
+    'X-Secret',
+]
 
 # Application definition
 
