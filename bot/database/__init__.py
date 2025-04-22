@@ -1,1 +1,1 @@
-from .apteka_database import Database
+from .apteka_database import Apteka_Database

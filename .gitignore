@@ -143,4 +143,4 @@ GitHub.sublime-settings
 bot/db.sqlite3
 test.py
 staticfiles/
-bot/media/
+bot/media/envs/.env

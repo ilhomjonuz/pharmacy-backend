@@ -40,12 +40,36 @@ class AllPillSerializer(serializers.ModelSerializer):
     categories_ru = serializers.SerializerMethodField('get_categories_ru')
     categories_en = serializers.SerializerMethodField('get_categories_en')
     price = serializers.SerializerMethodField("get_price")
+    type_uz = serializers.SerializerMethodField('get_type_uz')
+    type_ru = serializers.SerializerMethodField('get_type_ru')
+    type_en = serializers.SerializerMethodField('get_type_en')
 
     class Meta:
         model = Pill
         fields = [
-            'id', 'categories_uz', 'categories_ru', 'categories_en', 'name_uz', 'name_ru', 'name_en', 'picture', 'price',
+            'id', 'categories_uz', 'categories_ru', 'categories_en',
+            'name_uz', 'name_ru', 'name_en',
+            'body_uz', 'body_ru', 'body_en',
+            'price', 'percentage', 'discount_price',
+            'type_uz', 'type_ru', 'type_en',
+            'expiration_date',
+            'picture',
+            'rank',
+            'information_uz', 'information_ru', 'information_en',
+            'created_at', 'updated_at',
         ]
+
+    def get_type_uz(self, obj) -> str:
+        type_name = obj.type.name_uz
+        return type_name
+
+    def get_type_ru(self, obj) -> str:
+        type_name = obj.type.name_ru
+        return type_name
+
+    def get_type_en(self, obj) -> str:
+        type_name = obj.type.name_en
+        return type_name
 
     def get_categories_uz(self, obj) -> list[str]:
         categories = obj.categories.all()
@@ -68,6 +92,9 @@ class AllPillSerializer(serializers.ModelSerializer):
 
 class DiscountPillSerializer(serializers.ModelSerializer):
     percentage = serializers.SerializerMethodField("get_percentage", read_only=True)
+    type_uz = serializers.SerializerMethodField('get_type_uz')
+    type_ru = serializers.SerializerMethodField('get_type_ru')
+    type_en = serializers.SerializerMethodField('get_type_en')
 
     class Meta:
         model = Pill
@@ -75,12 +102,28 @@ class DiscountPillSerializer(serializers.ModelSerializer):
             'id', 'name_uz', 'name_ru', 'name_en',
             'body_uz', 'body_ru', 'body_en',
             'price', 'percentage', 'discount_price',
+            'type_uz', 'type_ru', 'type_en',
+            'expiration_date',
             'picture',
+            'rank',
+            'information_uz', 'information_ru', 'information_en',
             'created_at', 'updated_at',
         ]
 
     def get_percentage(self, obj) -> float:
         return (obj.price - obj.discount_price) / obj.price * 100
+
+    def get_type_uz(self, obj) -> str:
+        type_name = obj.type.name_uz
+        return type_name
+
+    def get_type_ru(self, obj) -> str:
+        type_name = obj.type.name_ru
+        return type_name
+
+    def get_type_en(self, obj) -> str:
+        type_name = obj.type.name_en
+        return type_name
 
 
 class PillDetailSerializer(serializers.ModelSerializer):

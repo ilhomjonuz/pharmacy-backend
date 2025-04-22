@@ -7,3 +7,4 @@ env.read_env('.env')
 BOT_TOKEN = env.str('BOT_TOKEN')
 ADMINS = env.list('ADMINS')
 CHANNELS = env.list('CHANNELS')
+

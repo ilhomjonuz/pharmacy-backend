@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   web:
     build:
@@ -8,16 +10,17 @@ services:
     command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
-      - /app/static
-      - /app/media
+      - static_volume:/app/static
+      - media_volume:/app/media
     env_file:
       - envs/.env
     depends_on:
       db:
         condition: service_healthy
-
     ports:
       - "8000:8000"
+    networks:
+      - apteka_network
 
   db:
     image: mysql:8.0
@@ -28,41 +31,33 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 3
-      timeout: 5s
-  bot:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - apteka_network
+
+  apteka_bot:
     build:
       context: .
       dockerfile: ./dockerfiles/django/Dockerfile
-    image: support_bot
-    command: python /app/Bot/main.py
+    image: apteka_bot
+    command: python bot/app.py
     volumes:
       - .:/app
     env_file:
       - envs/.env
-    depends_on:
-      - db
+    restart: always
+    networks:
+      - apteka_network
 
-  nginx:
-    build:
-      context: .
-      dockerfile: ./dockerfiles/nginx/Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - web
-    volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
-    logging:
-      options:
-        max-size: '10m'
-        max-file: '3'
+networks:
+  apteka_network:
+    driver: bridge
 
 volumes:
   static_volume:
-  mysql_data:
   media_volume:
+  mysql_data:
