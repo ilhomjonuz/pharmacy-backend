@@ -1,0 +1,61 @@
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: dockerfiles/django/Dockerfile
+    container_name: django_app
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - envs/.env
+    volumes:
+      - .:/app
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ndinoff_net
+
+  bot:
+    build:
+      context: .
+      dockerfile: dockerfiles/django/Dockerfile
+    container_name: bot_app
+    command: python bot/app.py
+    env_file:
+      - envs/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ndinoff_net
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    env_file:
+      - envs/.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ndinoff_net
+
+volumes:
+  mysql_data:
+
+networks:
+  ndinoff_net:
+    driver: bridge

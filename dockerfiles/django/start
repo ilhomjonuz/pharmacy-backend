@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+echo "Starting Django application..."
+
+# Ma'lumotlar bazasiga ulanish tayyorligini tekshirish
+echo "Waiting for database to be ready..."
+until python manage.py dbshell -c "SELECT 1;" &> /dev/null; do
+    echo "Database is unavailable - sleeping"
+    sleep 1
+done
+echo "Database is up - continuing..."
+
+# Django migratsiyalarini bajarish
+echo "Applying database migrations..."
+python manage.py migrate --noinput
+
+# Superuser yaratish (agar mavjud bo'lsa)
+if python manage.py help | grep -q createadmin; then
+    echo "Creating superuser..."
+    python manage.py createadmin
+else
+    echo "Skipping superuser creation, command not found."
+fi
+
+# Statik fayllarni yig'ish
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
+# Gunicorn serverni ishga tushirish
+echo "Starting Gunicorn server..."
+exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers=4 --timeout=120
