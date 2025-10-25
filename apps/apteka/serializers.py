@@ -25,6 +25,7 @@ class LastPillSerializer(serializers.ModelSerializer):
 
 class SmallPillSerializer(serializers.ModelSerializer):
     price = serializers.SerializerMethodField("get_price")
+    discount_price = serializers.SerializerMethodField('get_discount_price')
 
     class Meta:
         model = Pill
@@ -36,10 +37,11 @@ class SmallPillSerializer(serializers.ModelSerializer):
         ]
 
     def get_price(self, object) -> float:
-        if object.discount_price:
-            return object.discount_price
-        else:
-            return object.price
+        return object.price
+
+
+    def get_discount_price(self, object) -> float:
+        return object.discount_price
 
 
 class AllPillSerializer(serializers.ModelSerializer):
@@ -47,6 +49,7 @@ class AllPillSerializer(serializers.ModelSerializer):
     categories_ru = serializers.SerializerMethodField('get_categories_ru')
     categories_en = serializers.SerializerMethodField('get_categories_en')
     price = serializers.SerializerMethodField("get_price")
+    discount_price = serializers.SerializerMethodField('get_discount_price')
     type_uz = serializers.SerializerMethodField('get_type_uz')
     type_ru = serializers.SerializerMethodField('get_type_ru')
     type_en = serializers.SerializerMethodField('get_type_en')
@@ -92,10 +95,10 @@ class AllPillSerializer(serializers.ModelSerializer):
         return [obj.name_en for obj in categories]
 
     def get_price(self, object) -> float:
-        if object.discount_price:
-            return object.discount_price
-        else:
-            return object.price
+        return object.price
+
+    def get_discount_price(self, object) -> float:
+        return object.discount_price
 
 
 class DiscountPillSerializer(serializers.ModelSerializer):
