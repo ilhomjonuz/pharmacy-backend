@@ -33,7 +33,7 @@ class SmallPillSerializer(serializers.ModelSerializer):
             'id', 'name_uz', 'name_ru', 'name_en',
             'body_uz', 'body_ru', 'body_en',
             'information_uz', 'information_ru', 'information_en',
-            'picture', 'price', 'rank', 'pill_count'
+            'picture', 'price', 'discount_price', 'rank', 'pill_count'
         ]
 
     def get_price(self, object) -> float:
