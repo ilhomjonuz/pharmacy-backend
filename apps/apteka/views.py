@@ -1,3 +1,4 @@
+import html
 import os
 import re
 
@@ -193,7 +194,8 @@ class OrderCreateApiView(APIView):
 
     def clean_html(self, raw_html):
         clean = re.compile('<.*?>')
-        return re.sub(clean, '', raw_html)
+        text = re.sub(clean, '', raw_html)
+        return html.unescape(text)
 
     def generate_order_caption(self, phone_number, data, pill_data):
         def safe_field(value):
