@@ -29,7 +29,7 @@ menu_types = ReplyKeyboardMarkup(
         ]
     ],
     resize_keyboard=True
-)
+).one_time_keyboard
 
 categories_menu = ReplyKeyboardMarkup(
     keyboard=[

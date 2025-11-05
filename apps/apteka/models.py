@@ -32,7 +32,7 @@ class Pill(AbstractBaseModel):
     name = models.CharField(max_length=255, verbose_name='Nomi')
     body = RichTextField(null=True, blank=True, verbose_name="Dori haqida ma'lumot")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Narxi")
-    information = models.CharField(max_length=255, null=True, blank=True, verbose_name="Tarkibi")
+    information = models.CharField(max_length=1000, null=True, blank=True, verbose_name="Tarkibi")
     type = models.ForeignKey(Type, on_delete=models.SET_NULL, related_name='pills', null=True, blank=True,
                              verbose_name="Dori turi")
     expiration_date = models.DateField(verbose_name="Yaroqlilik muddati")

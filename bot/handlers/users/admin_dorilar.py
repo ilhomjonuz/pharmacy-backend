@@ -1,6 +1,7 @@
 import re
 
 from aiogram.enums import ContentType
+from aiogram.filters import StateFilter
 from aiogram.fsm.state import State
 from typing import Union
 
@@ -9,7 +10,7 @@ from aiogram.fsm.context import FSMContext
 
 from bot.buttons.default import dorilar_menu
 from bot.buttons.default.menu import doctors_menu
-from bot.buttons.inline import show_dori_inline
+from bot.buttons.inline import show_dori_inline, get_categories
 from bot.buttons.inline.dorilar_inline import PillsCallbackData, make_dorilar_list
 from bot.filters import AdminFilter, PrivateFilter
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove, FSInputFile
@@ -18,34 +19,55 @@ from loader import dp, db, bot
 
 from bot.states.types_states import PillsAddStates
 
-
 @dp.message(PrivateFilter(), lambda msg: msg.text == "💊 Dorilar bo'limi", AdminFilter())
 async def doctors_show(msg: Message):
     await msg.answer(msg.text, reply_markup=dorilar_menu)
 
 
 @dp.message(PrivateFilter(), F.text == "➕ Dori qo'shish", AdminFilter(), State(None))
-async def dori_name_add(msg: Union[Message, CallbackQuery], state: FSMContext, id=None, ):
-    if isinstance(msg, CallbackQuery):
-        call = msg
-        await call.message.delete()
-        await call.message.answer("🇺🇿 Dori nomini kiriting: ", reply_markup=ReplyKeyboardRemove())
+async def dori_category_send(msg: Union[Message, CallbackQuery], state: FSMContext):
+    categories = await get_categories()
+    is_callback = isinstance(msg, CallbackQuery)
+
+    if categories:
+        text = "Kategoriyadan birini tanlang.\nYoki kategoriya nomini kiriting: "
+        reply_markup = categories
     else:
-        await msg.answer("🇺🇿 Dori nomini kiriting: ", reply_markup=ReplyKeyboardRemove())
+        text = "Kategoriya nomini kiriting: "
+        reply_markup = None
+
+    if is_callback:
+        await msg.message.delete()
+        await msg.message.answer(text, reply_markup=reply_markup)
+    else:
+        await msg.answer(text, reply_markup=reply_markup)
+
+    await state.set_state(PillsAddStates.category_choose)
+
+@dp.callback_query()
+@dp.message(StateFilter(PillsAddStates.category_choose), AdminFilter())
+async def get_category(msg: Union[Message, CallbackQuery], state: FSMContext):
+    if isinstance(msg, CallbackQuery):
+        category_id = msg.data.split('-')[1]
+        await state.update_data({'cat_id': category_id})
+        await msg.message.delete()
+        await msg.message.answer("🇺🇿 Dori nomini kiriting: ")
+    else:
+        await state.update_data({'cat_name': msg.text})
+        await msg.answer("🇺🇿 Dori nomini kiriting: ")
 
     await state.set_state(PillsAddStates.name_uz)
-    await state.set_data({'id': id})
 
 
 @dp.message(PillsAddStates.name_uz, lambda msg: msg.content_type == ContentType.TEXT)
-async def dori_malumot_uz(msg: Message, state: FSMContext):
+async def dori_malumot_ru(msg: Message, state: FSMContext):
     await state.update_data({'name_uz': msg.text})
     await msg.answer("🇷🇺 Dori nomini kiriting: ")
     await state.set_state(PillsAddStates.name_ru)
 
 
 @dp.message(PillsAddStates.name_ru, lambda msg: msg.content_type == ContentType.TEXT)
-async def dori_malumot_uz(msg: Message, state: FSMContext):
+async def dori_malumot_gb(msg: Message, state: FSMContext):
     await state.update_data({'name_ru': msg.text})
     await msg.answer("🇬🇧 Dori nomini kiriting: ")
     await state.set_state(PillsAddStates.name_en)
