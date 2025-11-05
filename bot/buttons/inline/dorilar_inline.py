@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from ...loader import db
 
@@ -70,3 +71,41 @@ async def show_dori_inline(dori_id):
         ]
     )
     return markup
+
+
+async def have_vidio():
+    vidio = InlineKeyboardBuilder(
+        markup=[
+            [
+                InlineKeyboardButton(text='Ha', callback_data='yes'),
+                InlineKeyboardButton(text='Yo\'q', callback_data='no')
+            ]
+        ]
+    ).adjust(2).as_markup()
+    return vidio
+
+
+async def get_pill_types():
+    pill_types = await db.select_types()
+    if pill_types:
+        markup = InlineKeyboardBuilder()
+        for pill_type in pill_types:
+            markup.add(InlineKeyboardButton(text=f"{pill_type[1]}", callback_data=f"type-{pill_type[0]}"))
+
+        return markup.adjust(2).as_markup()
+    else:
+        return None
+
+
+async def have_sale():
+    markup = InlineKeyboardBuilder(
+        markup=[
+            [
+                InlineKeyboardButton(text='Mavjud', callback_data='have'),
+                InlineKeyboardButton(text='Mavjud emas', callback_data='have not')
+
+            ]
+        ]
+    ).adjust(2).as_markup()
+
+

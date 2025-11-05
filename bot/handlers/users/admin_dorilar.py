@@ -7,11 +7,13 @@ from typing import Union
 
 from aiogram import F
 from aiogram.fsm.context import FSMContext
+from pydantic.v1.typing import is_callable_type
 
 from bot.buttons.default import dorilar_menu
 from bot.buttons.default.menu import doctors_menu
 from bot.buttons.inline import show_dori_inline, get_categories
-from bot.buttons.inline.dorilar_inline import PillsCallbackData, make_dorilar_list
+from bot.buttons.inline.dorilar_inline import PillsCallbackData, make_dorilar_list, have_vidio, get_pill_types, \
+    have_sale
 from bot.filters import AdminFilter, PrivateFilter
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove, FSInputFile
 
@@ -76,21 +78,21 @@ async def dori_malumot_gb(msg: Message, state: FSMContext):
 @dp.message(PillsAddStates.name_en, lambda msg: msg.content_type == ContentType.TEXT)
 async def dori_malumot_uz(msg: Message, state: FSMContext):
     await state.update_data({'name_en': msg.text})
-    await msg.answer("🇺🇿 Dori haqida malumot kiriting: ")
+    await msg.answer("🇺🇿 Dori haqida ma'lumot kiriting: ")
     await state.set_state(PillsAddStates.information_dori_uz)
 
 
 @dp.message(PillsAddStates.information_dori_uz, lambda msg: msg.content_type == ContentType.TEXT)
 async def dori_malumot_ru(msg: Message, state: FSMContext):
     await state.update_data({'information_dori_uz': msg.text})
-    await msg.answer("🇷🇺 Dori haqida malumot kiriting: ")
+    await msg.answer("🇷🇺 Dori haqida ma'lumot kiriting: ")
     await state.set_state(PillsAddStates.information_dori_ru)
 
 
 @dp.message(PillsAddStates.information_dori_ru, lambda msg: msg.content_type == ContentType.TEXT)
 async def dori_malumot_en(msg: Message, state: FSMContext):
     await state.update_data({'information_dori_ru': msg.text})
-    await msg.answer("🇬🇧 Dori haqida malumot kiriting: ")
+    await msg.answer("🇬🇧 Dori haqida ma'lumot kiriting: ")
     await state.set_state(PillsAddStates.information_dori_en)
 
 
@@ -131,10 +133,75 @@ async def dori_muddati(msg: Message, state: FSMContext):
 
 
 @dp.message(PillsAddStates.yaroqlilik_muddati, lambda msg: msg.content_type == ContentType.TEXT and re.match(r"^\d{4}-\d{2}-\d{2}$", msg.text))
-async def doctor_photo(msg: Message, state: FSMContext):
+async def pill_video_url(msg: Message, state: FSMContext):
     await state.update_data({'yaroqlilik_muddati': msg.text})
-    await msg.answer("🖼 Dori rasmini kiriting: ")
-    await state.set_state(PillsAddStates.rasmi)
+    await msg.answer("Foydalanish vidio manzil mavjudmi?", reply_markup=await have_vidio())
+    await state.set_state(PillsAddStates.access_video_manzili)
+
+@dp.callback_query(PillsAddStates.access_video_manzili)
+async def get_pill_video_url(call: CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    if call.data == 'yes':
+        await call.message.answer("Vidio manzilini tashlang: ")
+        await state.set_state(PillsAddStates.video_manzili)
+    else:
+        await call.message.answer("Dori turini tanlang yoki kiriting: ", reply_markup=await get_pill_types())
+        await state.set_state(PillsAddStates.dori_turi)
+
+
+@dp.message(PillsAddStates.video_manzili, lambda msg: msg.content_type == ContentType.TEXT)
+async def get_video_url(msg: Message, state: FSMContext):
+    video_url = msg.text
+    await state.update_data({"video_url": video_url})
+    await msg.answer("Dori turini tanlang yoki kiriting: ", reply_markup=await get_pill_types())
+    await state.set_state(PillsAddStates.dori_turi)
+
+@dp.callback_query
+@dp.message(PillsAddStates.dori_turi)
+async def get_pill_type(msg: Union[Message, CallbackQuery], state: FSMContext):
+    is_callback = True if isinstance(msg, CallbackQuery) else False
+    if is_callback:
+        await msg.message.delete()
+        await state.update_data({"pill_type_id": msg.data.split('-')[1]})
+        await msg.message.answer("Chegirma narxi mavjudmi?", reply_markup=await have_sale())
+    else:
+        await state.update_data({'pill_type_name': msg.message.text})
+        await msg.message.answer("Chegirma narxi mavjudmi?", reply_markup=await have_sale())
+
+    await state.set_state(PillsAddStates.access_chegirma_narxi)
+
+
+@dp.callback_query(PillsAddStates.access_chegirma_narxi)
+async def get_sale_price(call: CallbackQuery, state: FSMContext):
+    if call.data == 'have':
+        await call.message.delete()
+        await call.message.answer("Chegirma narxini kiriting: ")
+        await state.set_state(PillsAddStates.chegirma_narxi)
+    else:
+        await call.message.delete()
+        await call.message.answer("Miqdorini kiriting: ")
+        await state.set_state(PillsAddStates.miqdori)
+
+@dp.message(PillsAddStates.chegirma_narxi)
+async def add_sale_price(msg: Message, state: FSMContext):
+    if msg.text.isdigit():
+        await state.update_data({"sale_price": msg.text})
+        await msg.answer("Miqdorini kiriting: ")
+        await state.set_state(PillsAddStates.miqdori)
+    else:
+        await msg.answer("Chegirma narxi faqat raqamlardan iborat bo'lsin!!!")
+        await state.set_state(PillsAddStates.chegirma_narxi)
+
+
+@dp.message(PillsAddStates.miqdori)
+async def get_pill_count(msg: Message, state: FSMContext):
+    if msg.text.isdigit():
+        await state.update_data({"pill_count": msg.text})
+        await msg.answer("🖼 Dori rasimini tashlang: ")
+        await state.set_state(PillsAddStates.rasmi)
+    else:
+        await msg.answer("Miqdorni raqamlarda kiriting!!")
+        await state.set_state(PillsAddStates.miqdori)
 
 
 @dp.message(PrivateFilter(), PillsAddStates.rasmi, lambda msg: msg.content_type in [ContentType.PHOTO])
